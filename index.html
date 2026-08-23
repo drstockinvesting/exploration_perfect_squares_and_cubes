@@ -1,0 +1,1357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Squares &amp; Cubes Explorer</title>
+<style>
+/* ============================================================================
+   THEME TOKENS
+   Light-first. Dark overrides only redefine tokens, never structural rules.
+   ========================================================================== */
+:root {
+  --bg:            #f4f6fb;
+  --panel:         #ffffff;
+  --panel-2:       #eef1f8;
+  --ink:           #16203a;
+  --ink-soft:      #566187;
+  --ink-faint:     #8e97b5;
+  --line:          #d2d9ea;
+  --line-strong:   #b3bdd6;
+
+  --sq:            #3f7ee8;   /* squares accent */
+  --sq-fill:       #a9c8f7;
+  --sq-fill-2:     #cbdefb;
+  --cu:            #d8763a;   /* cubes accent  */
+  --cu-fill:       #f0b183;
+  --cu-fill-2:     #f7d3b6;
+
+  --accent:        var(--sq);
+  --fill:          var(--sq-fill);
+  --fill-2:        var(--sq-fill-2);
+  --glow:          #ffd34d;   /* gnomon / new-units highlight */
+  --glow-ink:      #6b4a00;
+
+  --shadow:        0 1px 2px rgba(22,32,58,.06), 0 8px 24px rgba(22,32,58,.08);
+  --radius:        14px;
+}
+:root:not([data-theme="light"]) {
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:          #0e1220;
+    --panel:       #161c2e;
+    --panel-2:     #1e2639;
+    --ink:         #eaeefb;
+    --ink-soft:    #a3adcc;
+    --ink-faint:   #6f7a9c;
+    --line:        #2b3550;
+    --line-strong: #3d4a6d;
+
+    --sq:          #79aaff;
+    --sq-fill:     #2f5aa8;
+    --sq-fill-2:   #23406f;
+    --cu:          #ffa869;
+    --cu-fill:     #a55a29;
+    --cu-fill-2:   #78421e;
+
+    --glow:        #ffca3a;
+    --glow-ink:    #2a1d00;
+    --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"] {
+  --bg:          #0e1220;
+  --panel:       #161c2e;
+  --panel-2:     #1e2639;
+  --ink:         #eaeefb;
+  --ink-soft:    #a3adcc;
+  --ink-faint:   #6f7a9c;
+  --line:        #2b3550;
+  --line-strong: #3d4a6d;
+
+  --sq:          #79aaff;
+  --sq-fill:     #2f5aa8;
+  --sq-fill-2:   #23406f;
+  --cu:          #ffa869;
+  --cu-fill:     #a55a29;
+  --cu-fill-2:   #78421e;
+
+  --glow:        #ffca3a;
+  --glow-ink:    #2a1d00;
+  --shadow:      0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45);
+}
+
+/* Cubes mode repoints the accent tokens; every figure reads from these. */
+body[data-mode="cubes"] {
+  --accent: var(--cu);
+  --fill:   var(--cu-fill);
+  --fill-2: var(--cu-fill-2);
+}
+
+/* ============================================================================
+   BASE
+   ========================================================================== */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+.app {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 18px 22px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+}
+/* Figures carry display:grid, which would otherwise beat the UA rule for the
+   hidden attribute and leak the inactive figure onto the screen. */
+[hidden] { display: none !important; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ============================================================================
+   HEADER + CONTROLS
+   ========================================================================== */
+header.bar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+}
+.title {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  margin-right: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.title .level {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ink-faint);
+}
+.group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.group > .glabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--ink-faint);
+}
+.seg {
+  display: inline-flex;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.seg button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  border-radius: 7px;
+  padding: 7px 14px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink-soft);
+  transition: background .15s ease, color .15s ease;
+  white-space: nowrap;
+}
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #fff;
+}
+:root[data-theme="dark"] .seg button[aria-pressed="true"],
+:root:not([data-theme="light"]) .seg button[aria-pressed="true"] { color: #0e1220; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .seg button[aria-pressed="true"] { color: #fff; }
+}
+.btn {
+  appearance: none;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.btn:hover { color: var(--ink); border-color: var(--line-strong); }
+.btn[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn[hidden], .group[hidden] { display: none; }
+button:focus-visible, input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   STAGE GRID  —  side length | operation | figure + count
+   ========================================================================== */
+.stage {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr minmax(180px, 260px) 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.panel.mid {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+.roleline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 2px;
+  min-height: 18px;
+}
+.role {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  transition: color .2s ease;
+}
+.role.is-input { color: var(--accent); }
+.panel h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--ink-soft);
+}
+
+/* ---- left: slider + unit row ---------------------------------------------- */
+.readout {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.readout .big {
+  font-size: 60px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.03em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.readout .unitword {
+  font-size: 14px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 30px;
+  background: transparent;
+  margin: 2px 0 0;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px; height: 28px;
+  margin-top: -10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--panel);
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+input[type=range]::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+input[type=range]::-moz-range-thumb {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--panel);
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+.ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  margin-top: -2px;
+}
+.rowwrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 150px;
+  padding: 14px 0 4px;
+  perspective: 1400px;
+}
+#unitRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  max-width: 100%;
+  transform-style: preserve-3d;
+}
+.rowcaption {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+.rowcaption b { color: var(--ink); }
+
+/* ---- unit square (shared by row + big square + cube layers) ---------------- */
+.usq {
+  width: var(--u, 26px);
+  height: var(--u, 26px);
+  background: var(--fill);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+}
+.usq.thin { border-width: 1px; }
+
+/* ---- centre: arrow + notation --------------------------------------------- */
+.opblock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.oplabel {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-align: center;
+  min-height: 18px;
+}
+#arrow { width: 100%; max-width: 240px; height: 56px; overflow: visible; }
+#arrow .shaft, #arrow .head {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#arrow .head { fill: var(--accent); stroke-width: 0; }
+#arrowGroup { transition: transform .35s cubic-bezier(.4,0,.2,1); transform-origin: 120px 28px; }
+body[data-dir="left"] #arrowGroup { transform: scaleX(-1); }
+
+.notation {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 22px;
+  min-width: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 84px;
+}
+.math {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  font-size: 42px;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: flex-start;
+  white-space: nowrap;
+}
+.math sup {
+  font-size: .52em;
+  line-height: 1;
+  vertical-align: super;
+  margin-left: .04em;
+  color: var(--accent);
+  font-weight: 600;
+}
+/* Radical: an SVG check-mark whose up-stroke ends exactly at the top edge, so
+   it meets the radicand's CSS overline with no seam. Index tucked top-left. */
+.radical {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+  padding-left: .34em;
+}
+.radical .idx {
+  position: absolute;
+  left: 0;
+  top: -.02em;
+  font-size: .40em;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+}
+.radical .sign {
+  width: .46em;
+  height: .95em;
+  flex: none;
+  overflow: visible;
+}
+.radical .sign path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+}
+.radical .rad {
+  border-top: 3px solid var(--accent);
+  line-height: .74;
+  padding: .1em .2em 0 .1em;
+}
+.eqline {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  text-align: center;
+  min-height: 20px;
+}
+.eqline b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ---- right: figure + counter ---------------------------------------------- */
+.figwrap {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 300px;
+  padding: 8px 0 4px;
+  position: relative;
+}
+#squareFig {
+  display: grid;
+  gap: 2px;
+}
+#squareFig .usq { animation: none; }
+#squareFig .usq.isnew { animation: pop .45s cubic-bezier(.34,1.56,.64,1) backwards; }
+@keyframes pop {
+  0%   { transform: scale(.2); background: var(--glow); opacity: 0; }
+  60%  { background: var(--glow); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ---- 3D cube stage --------------------------------------------------------- */
+#cubeFig {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  display: grid;
+  place-items: center;
+  perspective: 1600px;
+  touch-action: none;
+  cursor: grab;
+}
+#cubeFig.dragging { cursor: grabbing; }
+#cubeStage {
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx, -24deg)) rotateY(var(--ry, -32deg)) scale(var(--fit, 1));
+  transition: transform .45s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  width: 0; height: 0;
+}
+#cubeStage.nosnap { transition: none; }
+.cubeBuild {
+  position: absolute;
+  left: 0; top: 0;
+  transform-style: preserve-3d;
+  transition: opacity .3s ease;
+}
+.cubeBuild[hidden] { display: none; }
+
+.ucube { position: absolute; transform-style: preserve-3d; }
+.ucube > i {
+  position: absolute;
+  display: block;
+  background: var(--fill);
+  border: 1px solid var(--accent);
+  left: 0; top: 0;
+}
+/* Per-orientation tint so edges read without lighting maths. */
+.ucube > i.f  { filter: brightness(1.06); }
+.ucube > i.bk { filter: brightness(.80); }
+.ucube > i.r  { filter: brightness(.90); }
+.ucube > i.l  { filter: brightness(.90); }
+.ucube > i.t  { filter: brightness(1.16); }
+.ucube > i.bt { filter: brightness(.72); }
+
+.layer {
+  position: absolute;
+  transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.4,0,.2,1);
+}
+.layerPlate {
+  position: absolute;
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  padding: 1px;
+}
+.layerTag {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  transform: translateZ(1px);
+}
+
+/* ---- counter --------------------------------------------------------------- */
+.counter {
+  border-top: 1px dashed var(--line);
+  padding-top: 12px;
+  margin-top: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.counter .total {
+  font-size: 60px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.03em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.counter .total.tick { animation: tick .3s ease; }
+@keyframes tick { 0% { transform: translateY(-6px); opacity: .35; } 100% { transform: none; opacity: 1; } }
+.counter .meta { display: flex; flex-direction: column; gap: 2px; }
+.counter .meta .eq {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.counter .meta .sub {
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.pulse { animation: pulse .55s ease; }
+@keyframes pulse {
+  0%, 100% { transform: none; }
+  35%      { transform: scale(1.06); }
+}
+
+.footnote {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.footnote kbd {
+  font: inherit;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+/* ============================================================================
+   RESPONSIVE  —  mobile is deliberately a working fallback, not a finished
+   design. Columns stack and the arrow turns to point down / up.
+   ========================================================================== */
+@media (max-width: 900px) {
+  .stage { grid-template-columns: 1fr; }
+  .panel.mid { padding: 6px 0; }
+  /* A square box so the rotated arrow always has room, and one rotation for
+     both directions — the group's own flip already turns "left" into "up". */
+  #arrow { width: 110px; height: 110px; max-width: none; transform: rotate(90deg); }
+  .figwrap, #cubeFig { min-height: 240px; }
+  .readout .big, .counter .total { font-size: 46px; }
+  .math { font-size: 34px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+</style>
+</head>
+<body data-mode="squares" data-dir="right">
+<div class="app">
+
+  <header class="bar">
+    <div class="title">
+      Squares &amp; Cubes Explorer
+      <span class="level" id="levelTag">Level 1 · Explore</span>
+    </div>
+
+    <div class="group">
+      <span class="glabel" id="lblShape">Shape</span>
+      <div class="seg" role="group" aria-labelledby="lblShape">
+        <button id="modeSquares" aria-pressed="true">Squares</button>
+        <button id="modeCubes"   aria-pressed="false">Cubes</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <span class="glabel" id="lblDir">Direction</span>
+      <div class="seg" role="group" aria-labelledby="lblDir">
+        <button id="dirRight" aria-pressed="true"  data-full="Square it">→ Square it</button>
+        <button id="dirLeft"  aria-pressed="false" data-full="Square root">← Square root</button>
+      </div>
+    </div>
+
+    <div class="group" id="cubeTools" hidden>
+      <button class="btn" id="explodeBtn" aria-pressed="false">Explode layers</button>
+      <button class="btn" id="resetViewBtn">Reset view</button>
+    </div>
+  </header>
+
+  <main class="stage">
+
+    <!-- ---------------- LEFT: side length ---------------- -->
+    <section class="panel" aria-labelledby="leftH">
+      <div class="roleline">
+        <span class="role" id="leftRole">Input</span>
+      </div>
+      <h2 id="leftH">Side length</h2>
+
+      <div class="readout">
+        <span class="big" id="sideValue">5</span>
+        <span class="unitword" id="sideWord">units along one side</span>
+      </div>
+
+      <label class="sr-only" for="sideSlider">Side length</label>
+      <input type="range" id="sideSlider" min="1" max="20" step="1" value="5"
+             aria-describedby="sideWord">
+      <div class="ticks"><span id="tickMin">1</span><span id="tickMax">20</span></div>
+
+      <div class="rowwrap">
+        <div id="unitRow" aria-hidden="true"></div>
+        <p class="rowcaption" id="rowCaption"></p>
+      </div>
+    </section>
+
+    <!-- ---------------- CENTRE: the operation ---------------- -->
+    <section class="panel mid" aria-labelledby="opLabel">
+      <div class="opblock">
+        <div class="oplabel" id="opLabel">Squaring</div>
+
+        <svg id="arrow" viewBox="0 0 240 56" role="img" aria-hidden="true">
+          <g id="arrowGroup">
+            <path class="shaft" d="M14 28 H196"/>
+            <path class="head"  d="M196 10 L232 28 L196 46 Z"/>
+          </g>
+        </svg>
+
+        <div class="notation">
+          <div class="math" id="notation"></div>
+        </div>
+        <div class="eqline" id="eqLine"></div>
+      </div>
+    </section>
+
+    <!-- ---------------- RIGHT: figure + counter ---------------- -->
+    <section class="panel" aria-labelledby="rightH">
+      <div class="roleline">
+        <span class="role" id="rightRole">Result</span>
+      </div>
+      <h2 id="rightH">The square</h2>
+
+      <div class="figwrap" id="figWrap">
+        <div id="squareFig" aria-hidden="true"></div>
+        <div id="cubeFig" hidden aria-hidden="true">
+          <div id="cubeStage">
+            <div class="cubeBuild" id="cubeSolid"></div>
+            <div class="cubeBuild" id="cubeLayers" hidden></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="counter">
+        <span class="total" id="totalValue">25</span>
+        <div class="meta">
+          <span class="eq" id="totalEq">5 × 5 = 25</span>
+          <span class="sub" id="totalSub">unit squares in all</span>
+        </div>
+      </div>
+      <p class="sr-only" id="liveSummary" aria-live="polite"></p>
+    </section>
+
+  </main>
+
+  <p class="footnote" id="footnote">
+    Drag the slider or use <kbd>←</kbd> <kbd>→</kbd> on it to change the side length.
+  </p>
+</div>
+
+<script>
+"use strict";
+/* ============================================================================
+ * 1. CONFIG — everything mode-specific lives here so nothing is hardcoded
+ *    downstream. Future levels read the same table.
+ * ==========================================================================*/
+const CONFIG = {
+  squares: {
+    dim: 2, min: 1, max: 20, def: 5,
+    exponent: "2",
+    radicalIndex: "",          // √ has no printed index
+    figureName: "square",
+    unitName: "unit square",
+    unitNamePlural: "unit squares",
+    opForward: "Squaring",
+    opBackward: "Square rooting",
+    btnForward: "→ Square it",
+    btnBackward: "← Square root"
+  },
+  cubes: {
+    dim: 3, min: 1, max: 10, def: 3,
+    exponent: "3",
+    radicalIndex: "3",
+    figureName: "cube",
+    unitName: "unit cube",
+    unitNamePlural: "unit cubes",
+    opForward: "Cubing",
+    opBackward: "Cube rooting",
+    btnForward: "→ Cube it",
+    btnBackward: "← Cube root"
+  }
+};
+
+/* The radical sign. The path ends at (24, 1.5) — the top right corner — which
+   is where the radicand's CSS overline begins, so the two read as one stroke. */
+const RADICAL_SVG =
+  '<svg class="sign" viewBox="0 0 24 44" preserveAspectRatio="none" aria-hidden="true">' +
+  '<path d="M0.5 26 L6 26 L12.5 42 L21 1.5 L24 1.5"/></svg>';
+
+/* The seed viewing angle for the cube: a clear three-quarter isometric read. */
+const SEED_RX = -24, SEED_RY = -32;
+
+/* ============================================================================
+ * 2. STATE — one plain object plus a diffing setState, so a rotation drag
+ *    never rebuilds several hundred cube nodes.
+ * ==========================================================================*/
+const state = {
+  level: 1,
+  mode: "squares",
+  n: CONFIG.squares.def,
+  direction: "right",     // "right" = square/cube, "left" = root
+  exploded: false,
+  rx: SEED_RX,
+  ry: SEED_RY
+};
+let prevN = state.n;      // used for the gnomon highlight
+
+const $ = (id) => document.getElementById(id);
+const el = {
+  body: document.body,
+  sideValue: $("sideValue"), sideWord: $("sideWord"), sideSlider: $("sideSlider"),
+  tickMin: $("tickMin"), tickMax: $("tickMax"),
+  unitRow: $("unitRow"), rowCaption: $("rowCaption"),
+  leftH: $("leftH"), rightH: $("rightH"), leftRole: $("leftRole"), rightRole: $("rightRole"),
+  opLabel: $("opLabel"), notation: $("notation"), eqLine: $("eqLine"),
+  figwrap: $("figWrap"),
+  squareFig: $("squareFig"), cubeFig: $("cubeFig"), cubeStage: $("cubeStage"),
+  cubeSolid: $("cubeSolid"), cubeLayers: $("cubeLayers"),
+  totalValue: $("totalValue"), totalEq: $("totalEq"), totalSub: $("totalSub"),
+  liveSummary: $("liveSummary"),
+  modeSquares: $("modeSquares"), modeCubes: $("modeCubes"),
+  dirRight: $("dirRight"), dirLeft: $("dirLeft"),
+  cubeTools: $("cubeTools"), explodeBtn: $("explodeBtn"), resetViewBtn: $("resetViewBtn"),
+  levelTag: $("levelTag")
+};
+
+const cfg = () => CONFIG[state.mode];
+const total = (s = state) => Math.pow(s.n, CONFIG[s.mode].dim);
+
+function setState(patch) {
+  const before = Object.assign({}, state);
+  Object.assign(state, patch);
+
+  const modeChanged = before.mode !== state.mode;
+  const nChanged    = before.n !== state.n;
+  const dirChanged  = before.direction !== state.direction;
+  const expChanged  = before.exploded !== state.exploded;
+  const rotChanged  = before.rx !== state.rx || before.ry !== state.ry;
+
+  if (rotChanged) applyRotation();
+  if (!(modeChanged || nChanged || dirChanged || expChanged)) return;
+
+  if (modeChanged) { prevN = state.n; renderChrome(); }
+  if (modeChanged || nChanged) {
+    renderSlider();
+    renderRow();
+    renderFigure(nChanged && !modeChanged ? before.n : null);
+  }
+  if (modeChanged || expChanged) renderExplode();
+  renderNotation();
+  renderCounter(nChanged || modeChanged);
+  renderRoles();
+  if (nChanged) prevN = state.n;
+}
+
+/* ============================================================================
+ * 3. BUILDERS — pure-ish DOM factories. Later levels reuse these untouched;
+ *    only the surrounding controls change.
+ * ==========================================================================*/
+
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+/** Space actually available inside the figure panel — measured, not assumed,
+ *  so the figures fit whatever window (or phone) they are handed. */
+/* Measuring the panel forces layout, so the box is cached and invalidated
+   whenever something that can change it happens (render, resize). This keeps
+   drag-rotation, which re-fits on every pointer move, off the layout path. */
+let boxCache = null;
+function invalidateBox() { boxCache = null; }
+function figBox() {
+  if (!boxCache) {
+    boxCache = {
+      w: Math.max(140, (el.figwrap.clientWidth || 340) - 8),
+      h: Math.max(140, (el.figwrap.clientHeight || 340) - 8)
+    };
+  }
+  return boxCache;
+}
+function figBudget() {
+  const b = figBox();
+  return Math.min(b.w, b.h);
+}
+function rowBudget() {
+  const w = (el.unitRow.parentElement && el.unitRow.parentElement.clientWidth) || 320;
+  return Math.max(140, w - 8);
+}
+
+/** Unit size for the figure on the right. Small side lengths are allowed to
+ *  grow large so the figure fills the panel on a projector. The 1.55 for cubes
+ *  leaves room for the isometric projection, wider than the n x u footprint. */
+function figUnitSize(n, mode) {
+  return mode === "cubes"
+    ? clamp(Math.floor(figBudget() / (n * 1.55)), 10, 60)
+    : clamp(Math.floor((figBudget() - (n - 1) * 2) / n), 6, 72);
+}
+/** Unit size for the linear row on the left. Capped at the figure's own unit
+ *  size, so a row unit never looks bigger than the units it builds. */
+function rowUnitSize(n, mode) {
+  let u = Math.floor((rowBudget() - (n - 1) * 3) / n);
+  if (mode === "cubes") u = Math.floor(u / 1.4);   // isometric offset margins
+  return clamp(Math.min(u, figUnitSize(n, mode)), mode === "cubes" ? 10 : 6, 72);
+}
+function squareUnitSize(n) { return figUnitSize(n, "squares"); }
+function cubeUnitSize(n)   { return figUnitSize(n, "cubes"); }
+
+/** buildRow: the n units laid in a line — flat squares, or little 3D cubes. */
+function buildRow(n, mode) {
+  const frag = document.createDocumentFragment();
+  const u = rowUnitSize(n, mode);
+  for (let i = 0; i < n; i++) {
+    if (mode === "cubes") {
+      frag.appendChild(makeUnitCube(u, { x: 0, y: 0, z: 0, inline: true }));
+    } else {
+      const d = document.createElement("div");
+      d.className = "usq";
+      d.style.setProperty("--u", u + "px");
+      frag.appendChild(d);
+    }
+  }
+  return { frag, u };
+}
+
+/** buildSquare: an n x n grid; units added since prev are flagged .isnew
+ *  so the L-shaped gnomon (2n-1 units) animates in. */
+function buildSquare(n, previous) {
+  const frag = document.createDocumentFragment();
+  const u = squareUnitSize(n);
+  const showGnomon = previous !== null && previous !== undefined && n > previous;
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const d = document.createElement("div");
+      d.className = "usq";
+      d.style.setProperty("--u", u + "px");
+      if (showGnomon && (r >= previous || c >= previous)) {
+        d.classList.add("isnew");
+        d.style.animationDelay = (Math.max(r, c) - previous) * 12 + "ms";
+      }
+      frag.appendChild(d);
+    }
+  }
+  return { frag, u };
+}
+
+/** One unit cube: six faces on a preserve-3d wrapper. */
+function makeUnitCube(u, pos) {
+  const c = document.createElement("div");
+  c.className = "ucube";
+  c.style.width = u + "px";
+  c.style.height = u + "px";
+  if (pos.inline) {
+    // Row usage: participates in normal flow, keeps its own 3D tilt.
+    c.style.position = "relative";
+    c.style.transform = "rotateX(-20deg) rotateY(-28deg)";
+    c.style.marginRight = Math.round(u * 0.35) + "px";
+    c.style.marginTop = Math.round(u * 0.30) + "px";
+  } else {
+    c.style.transform =
+      "translate3d(" + (pos.x * u) + "px," + (pos.y * u) + "px," + (pos.z * u) + "px)";
+  }
+  const faces = [
+    ["f",  "translateZ(" + (u / 2) + "px)"],
+    ["bk", "rotateY(180deg) translateZ(" + (u / 2) + "px)"],
+    ["r",  "rotateY(90deg) translateZ(" + (u / 2) + "px)"],
+    ["l",  "rotateY(-90deg) translateZ(" + (u / 2) + "px)"],
+    ["t",  "rotateX(90deg) translateZ(" + (u / 2) + "px)"],
+    ["bt", "rotateX(-90deg) translateZ(" + (u / 2) + "px)"]
+  ];
+  for (const [cls, tf] of faces) {
+    const f = document.createElement("i");
+    f.className = cls;
+    f.style.width = u + "px";
+    f.style.height = u + "px";
+    f.style.transform = tf;
+    c.appendChild(f);
+  }
+  return c;
+}
+
+/** buildCubeShell: only cubes with a coordinate on the outside are built.
+ *  Visually identical from any angle; 488 cubes instead of 1000 at n = 10. */
+function buildCubeShell(n) {
+  const frag = document.createDocumentFragment();
+  const u = cubeUnitSize(n);
+  // A unit cube's box starts at its translate point, so the solid is centred on
+  // the stage origin at -n/2, not -(n-1)/2.
+  const off = -n / 2;
+  let built = 0;
+  for (let x = 0; x < n; x++) {
+    for (let y = 0; y < n; y++) {
+      for (let z = 0; z < n; z++) {
+        const onShell =
+          x === 0 || x === n - 1 || y === 0 || y === n - 1 || z === 0 || z === n - 1;
+        if (!onShell) continue;
+        frag.appendChild(makeUnitCube(u, { x: x + off, y: y + off, z: z + off }));
+        built++;
+      }
+    }
+  }
+  return { frag, u, built };
+}
+
+/** buildCubeLayers: the n cross-sections, each a flat n x n plate of unit
+ *  squares — one node per unit, which is what the exploded view is about. */
+function buildCubeLayers(n) {
+  const frag = document.createDocumentFragment();
+  const u = cubeUnitSize(n);
+  const plate = n * u + (n - 1) + 2;     // grid gaps + padding
+  const off = -(n - 1) / 2;
+  for (let z = 0; z < n; z++) {
+    const layer = document.createElement("div");
+    layer.className = "layer";
+    layer.dataset.index = String(z);
+    layer.style.transitionDelay = (z * 22) + "ms";
+
+    const p = document.createElement("div");
+    p.className = "layerPlate";
+    p.style.gridTemplateColumns = "repeat(" + n + ", " + u + "px)";
+    p.style.width = plate + "px";
+    p.style.height = plate + "px";
+    p.style.left = (-plate / 2) + "px";
+    p.style.top = (-plate / 2) + "px";
+    for (let i = 0; i < n * n; i++) {
+      const d = document.createElement("div");
+      d.className = "usq thin";
+      d.style.setProperty("--u", u + "px");
+      p.appendChild(d);
+    }
+    layer.appendChild(p);
+
+    const tag = document.createElement("span");
+    tag.className = "layerTag";
+    tag.textContent = n + " × " + n + " = " + (n * n);
+    tag.style.left = (plate / 2 + 10) + "px";
+    tag.style.top = "-9px";
+    layer.appendChild(tag);
+
+    layer.dataset.baseZ = String((z + off) * u);
+    frag.appendChild(layer);
+  }
+  return { frag, u, plate };
+}
+
+/* ============================================================================
+ * 4. RENDERERS
+ * ==========================================================================*/
+function renderChrome() {
+  const c = cfg();
+  el.body.dataset.mode = state.mode;
+  el.modeSquares.setAttribute("aria-pressed", String(state.mode === "squares"));
+  el.modeCubes.setAttribute("aria-pressed", String(state.mode === "cubes"));
+  el.dirRight.textContent = c.btnForward;
+  el.dirLeft.textContent = c.btnBackward;
+  el.rightH.textContent = "The " + c.figureName;
+  el.sideWord.textContent = "units along one side";
+  el.totalSub.textContent = c.unitNamePlural + " in all";
+  el.cubeTools.hidden = state.mode !== "cubes";
+  el.squareFig.hidden = state.mode !== "squares";
+  el.cubeFig.hidden = state.mode !== "cubes";
+}
+
+function renderSlider() {
+  const c = cfg();
+  el.sideSlider.min = String(c.min);
+  el.sideSlider.max = String(c.max);
+  el.sideSlider.value = String(state.n);
+  el.tickMin.textContent = String(c.min);
+  el.tickMax.textContent = String(c.max);
+  el.sideValue.textContent = String(state.n);
+}
+
+function renderRow() {
+  invalidateBox();
+  const { frag } = buildRow(state.n, state.mode);
+  el.unitRow.replaceChildren(frag);
+  el.rowCaption.innerHTML =
+    "<b>" + state.n + "</b> " + (state.n === 1 ? cfg().unitName : cfg().unitNamePlural) +
+    " in a line — this is the side length.";
+}
+
+function renderFigure(previousN) {
+  invalidateBox();
+  if (state.mode === "squares") {
+    const { frag, u } = buildSquare(state.n, previousN);
+    el.squareFig.style.gridTemplateColumns = "repeat(" + state.n + ", " + u + "px)";
+    el.squareFig.replaceChildren(frag);
+  } else {
+    const shell = buildCubeShell(state.n);
+    el.cubeSolid.replaceChildren(shell.frag);
+    const layers = buildCubeLayers(state.n);
+    el.cubeLayers.replaceChildren(layers.frag);
+    positionLayers();
+  }
+}
+
+/** Gap between exploded layers: generous at small n, capped at large n so the
+ *  stack still fits without scaling the unit squares into invisibility. */
+function explodeSpread(n, u) {
+  return Math.max(u * 1.15, Math.min(u * 2.3, 520 / Math.max(n - 1, 1)));
+}
+
+/** Layers sit flush when assembled, fanned along z when exploded. The fanned
+ *  stack is deeper than the panel at large n, so the stage is scaled to fit. */
+function positionLayers() {
+  const n = state.n;
+  const u = cubeUnitSize(n);
+  const spread = state.exploded ? explodeSpread(n, u) : u;
+  const off = -(n - 1) / 2;
+  const layers = el.cubeLayers.children;
+  for (let z = 0; z < layers.length; z++) {
+    const L = layers[z];
+    L.style.transform = "translateZ(" + ((z + off) * spread) + "px)";
+    // display, not opacity: a hidden tag must not occupy space either.
+    const showTag = state.exploded && (n <= 5 || z === layers.length - 1);
+    L.querySelector(".layerTag").style.display = showTag ? "" : "none";
+  }
+  updateFit();
+}
+
+/** Scale the whole stage so the current view fits the panel — for the fanned
+ *  stack and for the assembled cube, whose isometric projection is wider than
+ *  its own footprint. Cheap enough to re-run while dragging. */
+function updateFit() {
+  if (state.mode !== "cubes") return;
+  const n = state.n;
+  const u = cubeUnitSize(n);
+  let fit;
+  if (state.exploded) {
+    const spread = explodeSpread(n, u);
+    const plate = n * u + (n - 1) + 2;
+    // Layer tags hang off the right of each plate and scale with them.
+    fit = fitScale(plate, (n - 1) * spread, 100);
+  } else {
+    fit = fitScale(n * u, n * u, 0);
+  }
+  el.cubeStage.style.setProperty("--fit", String(fit));
+}
+
+/** How much the fanned stack has to shrink to sit inside the figure panel.
+ *  A plate of side P centred on the origin, stacked across a depth D, then
+ *  rotated by (rx, ry), projects to a box of these half-extents — times the
+ *  perspective magnification of the nearest plate. */
+function fitScale(P, D, tagW) {
+  const rad = (d) => d * Math.PI / 180;
+  const cx = Math.abs(Math.cos(rad(state.rx))), sx = Math.abs(Math.sin(rad(state.rx)));
+  const cy = Math.abs(Math.cos(rad(state.ry))), sy = Math.abs(Math.sin(rad(state.ry)));
+  const halfW = (P / 2) * cy + (D / 2) * sy;
+  const halfH = (P / 2) * (cx + sx * sy) + (D / 2) * sx * cy;
+  const PERSPECTIVE = 1600;
+  const mag = PERSPECTIVE / Math.max(PERSPECTIVE - D / 2, 200);
+  // Tags hang off one side only, so their allowance is added once.
+  const w = (2 * halfW + (tagW || 0) * cy) * mag;
+  const h = 2 * halfH * mag;
+  const box = figBox();
+  return clamp(Math.min(box.w / w, box.h / h) * 0.97, 0.25, 1);
+}
+
+function renderExplode() {
+  const on = state.exploded && state.mode === "cubes";
+  el.explodeBtn.setAttribute("aria-pressed", String(on));
+  el.explodeBtn.textContent = on ? "Rebuild cube" : "Explode layers";
+  el.cubeSolid.hidden = on;
+  el.cubeLayers.hidden = !on;
+  positionLayers();
+}
+
+function renderNotation() {
+  const c = cfg();
+  const forward = state.direction === "right";
+  el.body.dataset.dir = state.direction;
+  el.dirRight.setAttribute("aria-pressed", String(forward));
+  el.dirLeft.setAttribute("aria-pressed", String(!forward));
+  el.opLabel.textContent = forward ? c.opForward : c.opBackward;
+
+  if (forward) {
+    el.notation.innerHTML = state.n + "<sup>" + c.exponent + "</sup>";
+    el.eqLine.innerHTML =
+      "<b>" + state.n + "</b><sup>" + c.exponent + "</sup> = <b>" + total() + "</b>";
+  } else {
+    const idx = c.radicalIndex
+      ? '<span class="idx">' + c.radicalIndex + "</span>" : "";
+    el.notation.innerHTML =
+      '<span class="radical">' + idx + RADICAL_SVG +
+      '<span class="rad">' + total() + "</span></span>";
+    el.eqLine.innerHTML =
+      (c.radicalIndex ? "cube root" : "square root") +
+      " of <b>" + total() + "</b> = <b>" + state.n + "</b>";
+  }
+}
+
+function renderCounter(animate) {
+  const c = cfg();
+  const N = total();
+  el.totalValue.textContent = String(N);
+  el.totalEq.textContent = state.n + " × " + state.n +
+    (c.dim === 3 ? " × " + state.n : "") + " = " + N;
+  el.totalSub.textContent = c.dim === 3
+    ? state.n + " layers × " + (state.n * state.n) + " = " + N + " " + c.unitNamePlural
+    : c.unitNamePlural + " in all";
+  if (animate) {
+    el.totalValue.classList.remove("tick");
+    void el.totalValue.offsetWidth;   // restart the animation
+    el.totalValue.classList.add("tick");
+  }
+  el.liveSummary.textContent =
+    "Side length " + state.n + ". " + N + " " + c.unitNamePlural + ". " +
+    (state.direction === "right"
+      ? state.n + " to the power of " + c.exponent + " equals " + N
+      : "The " + (c.dim === 3 ? "cube" : "square") + " root of " + N + " is " + state.n);
+}
+
+/** Which side is being treated as the given, and which is derived. */
+function renderRoles() {
+  const forward = state.direction === "right";
+  el.leftRole.textContent = forward ? "Start with" : "Answer";
+  el.rightRole.textContent = forward ? "Answer" : "Start with";
+  el.leftRole.classList.toggle("is-input", forward);
+  el.rightRole.classList.toggle("is-input", !forward);
+
+  // Highlight order follows the arrow: the given pulses first.
+  const givenEl = forward ? el.sideValue : el.totalValue;
+  const derivedEl = forward ? el.totalValue : el.sideValue;
+  pulse(givenEl, 0);
+  pulse(derivedEl, 180);
+}
+function pulse(node, delay) {
+  setTimeout(() => {
+    node.classList.remove("pulse");
+    void node.offsetWidth;
+    node.classList.add("pulse");
+  }, delay);
+}
+
+function applyRotation() {
+  el.cubeStage.style.setProperty("--rx", state.rx + "deg");
+  el.cubeStage.style.setProperty("--ry", state.ry + "deg");
+  updateFit();   // a new angle projects to a different size
+}
+
+/* ============================================================================
+ * 5. EVENTS
+ * ==========================================================================*/
+el.sideSlider.addEventListener("input", (e) => {
+  setState({ n: parseInt(e.target.value, 10) });
+});
+
+el.modeSquares.addEventListener("click", () => switchMode("squares"));
+el.modeCubes.addEventListener("click", () => switchMode("cubes"));
+
+function switchMode(mode) {
+  if (state.mode === mode) return;
+  const c = CONFIG[mode];
+  // Keep the current side length where it is legal in the new mode.
+  const n = Math.max(c.min, Math.min(c.max, state.n));
+  setState({ mode, n, exploded: false });
+}
+
+el.dirRight.addEventListener("click", () => setState({ direction: "right" }));
+el.dirLeft.addEventListener("click",  () => setState({ direction: "left" }));
+
+el.explodeBtn.addEventListener("click", () => setState({ exploded: !state.exploded }));
+el.resetViewBtn.addEventListener("click", () => {
+  el.cubeStage.classList.remove("nosnap");
+  setState({ rx: SEED_RX, ry: SEED_RY });
+});
+
+/* Drag to rotate. Pointer Events, so touch works when the mobile layout is
+   finished. Pitch is clamped so the cube never lands face-on or upside down. */
+let drag = null;
+el.cubeFig.addEventListener("pointerdown", (e) => {
+  drag = { id: e.pointerId, x: e.clientX, y: e.clientY, rx: state.rx, ry: state.ry };
+  el.cubeFig.setPointerCapture(e.pointerId);
+  el.cubeFig.classList.add("dragging");
+  el.cubeStage.classList.add("nosnap");
+});
+el.cubeFig.addEventListener("pointermove", (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const rx = clamp(drag.rx - (e.clientY - drag.y) * 0.4, -80, 80);
+  const ry = drag.ry + (e.clientX - drag.x) * 0.4;
+  setState({ rx, ry });
+});
+function endDrag(e) {
+  if (!drag || (e && e.pointerId !== drag.id)) return;
+  drag = null;
+  el.cubeFig.classList.remove("dragging");
+  el.cubeStage.classList.remove("nosnap");
+}
+el.cubeFig.addEventListener("pointerup", endDrag);
+el.cubeFig.addEventListener("pointercancel", endDrag);
+
+/* Keyboard shortcuts that do not fight the slider's own arrow keys. */
+document.addEventListener("keydown", (e) => {
+  if (e.target === el.sideSlider || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === "s") switchMode("squares");
+  else if (k === "c") switchMode("cubes");
+  else if (k === "e" && state.mode === "cubes") setState({ exploded: !state.exploded });
+  else if (k === "r") setState({ rx: SEED_RX, ry: SEED_RY });
+  else if (k === "d") setState({ direction: state.direction === "right" ? "left" : "right" });
+});
+
+/* ============================================================================
+ * 6. LEVELS — registry so later levels are an added entry, not a refactor.
+ *    Shape: { id, title, setup(state), controls: [ids to show], validate(s) }
+ *    Only level 1 exists today; ?level=1 selects it.
+ * ==========================================================================*/
+const LEVELS = {
+  1: {
+    id: 1,
+    title: "Level 1 · Explore",
+    setup() { /* base level: everything is driven by the slider */ },
+    validate() { return true; }
+  }
+  // 2: build-the-square/cube, 3: enter the notation, 4: imperfect roots ...
+};
+
+function boot() {
+  const requested = parseInt(new URLSearchParams(location.search).get("level") || "1", 10);
+  const level = LEVELS[requested] ? requested : 1;
+  state.level = level;
+  el.levelTag.textContent = LEVELS[level].title;
+  LEVELS[level].setup(state);
+
+  renderChrome();
+  renderSlider();
+  renderRow();
+  renderFigure(null);
+  renderExplode();
+  renderNotation();
+  renderCounter(false);
+  renderRoles();
+  applyRotation();
+}
+boot();
+
+/* Figures are sized from measured space, so a resize needs a re-fit. */
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    invalidateBox();
+    renderRow();
+    renderFigure(null);
+    if (state.mode === "cubes") positionLayers();
+  }, 120);
+});
+
+/* Exposed for the verification harness and for later levels. */
+window.SCE = { state, setState, CONFIG, LEVELS, total, switchMode };
+</script>
+</body>
+</html>
