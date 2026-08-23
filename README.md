@@ -64,9 +64,28 @@ should only need to change the controls around them.
 Planned: build-the-figure, enter-the-notation, and imperfect roots (where a
 total that will not form a full square lands *between* two perfect squares).
 
+## Theme
+
+The app wears the **Dr. Cole's Math Lab** theme, so it matches the other apps in
+the collection (Transform Lab, Balancing Act, Tiger Trail). Surface and ink
+tokens are carried verbatim from that site's `tools/site.config.js`, where they
+are contrast-measured to WCAG 2.1 AA; squares take the cyan accent and cubes the
+orange one. It is **dark only** — the Math Lab palette is a dark one, and there
+is deliberately no `prefers-color-scheme` branch to flip.
+
+Nunito and Space Mono ship inside `index.html` as base64 `data:` URIs, between
+the `FONTS:START` / `FONTS:END` markers. That is not decoration: Chrome fetches
+`@font-face` in CORS mode, and from a `file://` page the origin is opaque, so a
+relative `.woff2` fails silently and the page renders in Helvetica with nothing
+to signal that anything went wrong. A `data:` URI has no origin to check. Both
+faces are SIL Open Font License; the source files and licence text live in the
+Math Lab repo under `assets/fonts/`.
+
+The one rule inherited from that site holds here too: **no external-origin
+requests**. Everything the page needs is in the file.
+
 ## Browsers
 
-Built and checked on desktop Chromium at 1440×900, light and dark. The layout
-collapses to a single column below 900px and all pointer handling uses Pointer
-Events, so it is usable on a phone — but mobile is a working fallback, not a
-finished design.
+Built and checked on desktop Chromium at 1440×900. The layout collapses to a
+single column below 900px and all pointer handling uses Pointer Events, so it is
+usable on a phone — but mobile is a working fallback, not a finished design.
