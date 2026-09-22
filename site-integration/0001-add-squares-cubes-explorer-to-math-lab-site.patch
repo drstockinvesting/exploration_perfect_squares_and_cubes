@@ -53,13 +53,13 @@ Claude-Session: https://claude.ai/code/session_01RuVnZLGRLdHnu4hQWKTdoT
  assets/og-squares-cubes.png   | Bin 0 -> 145655 bytes
  balancing-act.html            |   10 
  index.html                    |   22 +
- squares-cubes.html            |  609 ++++++++++++++++++++++++++++++
+ squares-cubes.html            |  616 +++++++++++++++++++++++++++++++
  tiger-trail.html              |    5 
  tools/og-cards.html           |   18 +
  tools/site.config.js          |   58 +++
  tools/vendor-squares-cubes.js |  104 +++++
  transform-lab.html            |    5 
- 11 files changed, 2397 insertions(+), 11 deletions(-)
+ 11 files changed, 2404 insertions(+), 11 deletions(-)
  create mode 100644 apps/squares-cubes/index.html
  create mode 100644 apps/squares-cubes/styles.css
  create mode 100644 assets/og-squares-cubes.png
@@ -4548,10 +4548,10 @@ index f382f8b..33446b7 100644
  </footer>
 diff --git a/squares-cubes.html b/squares-cubes.html
 new file mode 100644
-index 0000000..7a92428
+index 0000000..0e101e5
 --- /dev/null
 +++ b/squares-cubes.html
-@@ -0,0 +1,609 @@
+@@ -0,0 +1,616 @@
 +<!DOCTYPE html>
 +<html lang="en">
 +<head>
@@ -4967,7 +4967,13 @@ index 0000000..7a92428
 +          <li><strong>Right &mdash; the figure and the count.</strong> The
 +            <span class="mono">n&nbsp;&times;&nbsp;n</span> square or
 +            <span class="mono">n&nbsp;&times;&nbsp;n&nbsp;&times;&nbsp;n</span> cube, with the total
-+            spelled out as a product rather than just an answer.</li>
++            spelled out as a product rather than just an answer. The side length is carried
++            onto the figure itself: the units along the square&rsquo;s bottom and left edges
++            &mdash; and along the three edges meeting at the cube&rsquo;s near bottom-left
++            corner &mdash; are the same yellow as the row on the left, each with a curly brace
++            reading <span class="mono">Side length&nbsp;=&nbsp;s</span>. The same run of
++            <span class="mono">s</span> units can be counted twice: once on the row, and once
++            on the figure it built.</li>
 +        </ul>
 +
 +        <h3>Controls</h3>
@@ -4986,7 +4992,8 @@ index 0000000..7a92428
 +
 +        <div class="callout">
 +          <p><strong>Watch the L.</strong> Raise the slider by one in Squares mode and the new
-+          row, column and corner flash gold together. That L-shape is the
++          row, column and corner flash white together &mdash; white rather than yellow, which
++          is already spoken for as the colour of a side length. That L-shape is the
 +          <span class="mono">2n&nbsp;+&nbsp;1</span> between <span class="mono">n&sup2;</span> and
 +          <span class="mono">(n&nbsp;+&nbsp;1)&sup2;</span> &mdash; the reason consecutive squares are
 +          spaced the way they are, shown rather than stated.</p>

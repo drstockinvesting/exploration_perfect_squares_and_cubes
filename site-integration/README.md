@@ -56,11 +56,12 @@ node tools/check-external.js      # must report zero external origins
 ### Keeping the vendored payload current
 
 `apps/squares-cubes/` inside the patch is a copy of this repo's `index.html`, so
-it goes stale every time that file changes. Both of its hunks are whole-new-file
-additions, which carry no context to invalidate, so they can be regenerated in
-place without touching the rest of the patch — the binary card, the five context
-diffs against blobs this repo does not hold, and the trailer are spliced through
-byte-for-byte, and only the diffstat is recomputed.
+it goes stale every time that file changes, and `squares-cubes.html` describes
+the app in prose, so it goes stale whenever the app's *behaviour* does. All
+three are whole-new-file hunks, which carry no context to invalidate, so they
+can be regenerated in place without touching the rest of the patch — the binary
+card, the five context diffs against blobs this repo does not hold, and the
+trailer are spliced through byte-for-byte, and only the diffstat is recomputed.
 
 The recipe is the vendor script's lift, followed by the one edit
 `apply-site-chrome.js` makes: it stamps its own header comment over the upstream
@@ -70,9 +71,9 @@ patch from the previous `index.html` — if it stops doing so, the site's
 generator has changed and the patch needs re-cutting against the site repo
 rather than editing.
 
-If this repo has moved on further than that — anything outside
-`apps/squares-cubes/` — skip the patch and just re-run the vendor script, which
-reproduces the same directory from source:
+If the patch has drifted further than those three files can absorb, skip it and
+re-run the vendor script against the site repo, which reproduces
+`apps/squares-cubes/` from source:
 
 ```bash
 node tools/vendor-squares-cubes.js /path/to/exploration_perfect_squares_and_cubes
