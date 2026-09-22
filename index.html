@@ -767,6 +767,168 @@ body[data-dir="left"] #arrowGroup { transform: scaleX(-1); }
     transition-duration: .001ms !important;
   }
 }
+
+/* ============================================================================
+   PRINT  —  the same explorer, re-coloured for paper
+   ----------------------------------------------------------------------------
+   Ctrl+P on any state gives that state as one landscape page. Nothing here
+   changes the screen; every rule is scoped to the print media type, and the
+   whole treatment is token overrides plus a short list of things paper has no
+   use for. That works only because no colour in this file is ever written from
+   JavaScript — every hue reaches the figures through the custom properties
+   below, so redefining nine of them re-colours the entire app at once.
+
+   Landscape, because the stage is a left-to-right argument: side length, then
+   the arrow, then the figure. Forced into portrait the three columns crush to
+   about 60mm each and the square's braces collide with its own edge.
+   ========================================================================== */
+@media print {
+
+  @page { size: letter landscape; margin: 12mm; }
+
+  /* ---- palette ------------------------------------------------------------
+     The screen pair cannot be reused: over white, #00d4ff lands at 1.8:1 and
+     #ffd60a at 1.4:1, both far under the 4.5:1 a numeral needs. So each hue
+     splits into a dark stroke that carries text and a pale fill that carries
+     area, and the two hues are pushed APART in lightness rather than only in
+     hue — a side-length fill at 81% luminance against a figure fill at 46%
+     stays two obviously different greys on a photocopier (ΔL 36%).
+
+     The strokes are the one place that fails and cannot be fixed: both must
+     clear 4.5:1 on white, which caps each below 18% luminance, so a yellow
+     numeral and a blue numeral are only 8% apart in grey. Photocopy this and
+     the figures still read; the colour-coding of the digits does not. The
+     wording carries it instead — every total is also named in words. */
+  :root {
+    --bg:          #ffffff;
+    --panel:       #ffffff;
+    --panel-2:     #f4f6fa;
+    --ink:         #14161f;
+    --ink-soft:    #333849;
+    --ink-faint:   #6b7286;
+    --line:        #d6dae3;
+    --line-strong: #b9bfcc;
+
+    --blue:        #07485a;   /* figure + totals, as a stroke */
+    --blue-fill:   #79bed3;   /* opaque now: nothing composites over paper */
+    --blue-face:   #8ec9da;
+    --hl:          #96700a;   /* side length, as a stroke */
+    --hl-fill:     #ffe7a8;
+    --hl-face:     #f7dd9a;
+
+    --glow:        #ffffff;
+    --shadow:      none;
+  }
+
+  /* Chrome and Safari drop background colours when printing unless told not
+     to. Every unit square in this app IS a background colour, so without this
+     the figures print as empty outlines. */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* height:100% on the screen layout reserves a second, empty sheet. */
+  html, body { height: auto; }
+  body { background: #fff; }
+  .app {
+    max-width: none;
+    min-height: 0;
+    padding: 0;
+    gap: 10px;
+  }
+
+  /* Mid-animation state would be printed as-is — a half-grown square, or a
+     unit still white from the gnomon flash. Freeze everything at its end. */
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* ---- what paper has no use for -----------------------------------------
+     Controls, the drag hint, and the slider: all of them are instructions to
+     do something the page cannot do. The title stays, so a printout says what
+     it is and who it is from. */
+  .bar .group,
+  .seg,
+  .btn,
+  input[type=range],
+  .ticks,
+  .footnote { display: none !important; }
+
+  header.bar {
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    padding: 0 0 8px;
+  }
+  .title { font-size: 17px; }
+
+  /* ---- the stage ---------------------------------------------------------
+     The stage is a three-column grid on screen, and Chromium's print path
+     fragments grid containers wrongly: the layout fits one sheet with 180px
+     to spare, yet the figure column is pushed onto a second, otherwise empty
+     page. Flex lays the same three columns out identically and paginates
+     correctly, so print gets flex. Verified by bisection — with the grid in
+     place every state prints 2 pages, with flex every state prints 1.
+
+     The tracks are the grid's own: two equal outer columns and a centre one
+     that sits between 180px and 260px. */
+  .stage {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .stage > .panel { flex: 1 1 0; min-width: 0; }
+  .stage > .panel.mid { flex: 0 1 260px; min-width: 180px; }
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px 14px;
+    break-inside: avoid;
+  }
+  .panel.mid { border: 0; }
+
+  /* Display type is sized for a screen two feet away; on paper it only steals
+     room from the figure, which is the thing actually worth printing. */
+  .readout .big,
+  .counter .total { font-size: 40px; }
+  .math           { font-size: 30px; }
+  .readout        { margin-bottom: 2px; }
+  /* Deliberately modest. The figure's unit size is min(width, height) of its
+     panel, so a taller box makes a taller figure, and past roughly 300px the
+     panel outgrows the sheet and a second page appears — at n = 10 and above,
+     on any window wider than about 1400px. Verified across 4 window widths x
+     5 side lengths: 210px prints one page everywhere, 340px prints two
+     everywhere. The cost is white space at the foot of the sheet. */
+  .figwrap, #cubeFig { min-height: 210px; }
+  .rowwrap           { min-height: 110px; }
+
+  /* The unit row has no slider under it any more, so it can have that space. */
+  .rowwrap { padding-top: 4px; }
+
+  /* Face shading is multiplicative, so on pale print faces the brightest two
+     orientations wash out to near-white and the cube loses its top. Compress
+     the range upward only; the darker faces are what give it its form. */
+  .ucube > i.f { filter: none; }
+  .ucube > i.t { filter: brightness(1.04); }
+
+  /* A handout should say where the live, movable version is. */
+  .app::after {
+    content: "Interactive version: drstockinvesting.github.io/exploration_perfect_squares_and_cubes";
+    display: block;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+    font-size: 9px;
+    letter-spacing: .02em;
+    color: var(--ink-faint);
+    text-align: center;
+  }
+}
 </style>
 </head>
 <body data-mode="squares" data-dir="right">
@@ -1577,6 +1739,25 @@ window.addEventListener("resize", () => {
     if (state.mode === "cubes") positionLayers();
   }, 120);
 });
+
+/* Printing resizes the figure panel without firing a resize event, so the
+   measured unit size would stay at whatever the window happened to give it:
+   an n = 12 square fitted to a 544px on-screen panel overflows the ~416px
+   print panel by over 200px, and prints clipped. `beforeprint` cannot fix it
+   — it runs before print formatting, so it still measures the screen box. The
+   print media query changes while the print layout is live, which makes it the
+   only hook that measures the page as it will actually be printed. The same
+   handler runs on the way back out, so leaving the print dialog restores the
+   on-screen fit. */
+const printMQ = window.matchMedia("print");
+function refitForMedia() {
+  invalidateBox();
+  renderRow();
+  renderFigure(null);
+  if (state.mode === "cubes") positionLayers();
+}
+if (printMQ.addEventListener)   printMQ.addEventListener("change", refitForMedia);
+else if (printMQ.addListener)   printMQ.addListener(refitForMedia);   /* Safari < 14 */
 
 /* Exposed for the verification harness and for later levels. */
 window.SCE = { state, setState, CONFIG, LEVELS, total, switchMode };

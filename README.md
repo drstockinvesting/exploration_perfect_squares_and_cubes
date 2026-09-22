@@ -123,6 +123,42 @@ Math Lab repo under `assets/fonts/`.
 The one rule inherited from that site holds here too: **no external-origin
 requests**. Everything the page needs is in the file.
 
+## Printing
+
+**Ctrl+P on any state prints that state as one US-Letter landscape page.** There
+is no separate print file — the state on screen is what comes out, so the side
+length, the direction and squares-or-cubes are whatever you set before printing.
+
+Paper gets its own treatment rather than a screenshot of the dark UI:
+
+* **Re-coloured, not inverted.** The screen pair measures 1.8:1 (cyan) and 1.4:1
+  (yellow) against white — both far under the 4.5:1 a numeral needs — so each
+  hue splits into a dark stroke for text and a pale fill for area. The two are
+  pushed apart in *lightness* as well as hue (figure fill 46%, side-length fill
+  81%), so they stay two distinct greys on a photocopier.
+* **Controls are dropped.** The slider, the mode and direction buttons and the
+  drag hint are all instructions to do something paper cannot do. The title and
+  a link back to the live version stay.
+* **The figure is re-fitted.** Unit size is measured from the figure panel, and
+  the print panel is narrower than the on-screen one. Printing fires no `resize`
+  event and `beforeprint` runs before print formatting, so both would leave the
+  figure at its window size — an n = 12 square fitted to a 544px panel overflows
+  the print panel by over 200px. The `matchMedia("print")` change event fires
+  with the print layout live, and that is what triggers the re-fit.
+
+Two known limits:
+
+* The foot of the sheet is empty by roughly a quarter. The figure is sized from
+  `min(width, height)` of its panel, so enlarging it means a taller panel, and
+  past about 300px the panel outgrows the sheet and a second page appears.
+  210px is the largest value that prints one page across every window width and
+  side length tested.
+* Colour-coded *digits* do not survive a greyscale photocopier. Both stroke
+  colours must clear 4.5:1 on white, which caps each below 18% luminance, so a
+  yellow numeral and a blue numeral end up about 8% apart in grey. The figures
+  still read; the wording carries the rest, since every total is also named in
+  words.
+
 ## Browsers
 
 Built and checked on desktop Chromium at 1440×900. The layout collapses to a
