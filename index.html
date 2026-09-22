@@ -420,13 +420,17 @@ input[type=range]::-moz-range-thumb {
   width: 100%;
 }
 .oplabel {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  /* A whole sentence, so it is set as prose: sentence case, ordinary tracking,
+     and a max-width that makes it break after "side" / "area" rather than
+     stretching the centre column. Two lines is the design, not an overflow. */
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
   color: var(--accent);
   text-align: center;
-  min-height: 18px;
+  text-wrap: balance;
+  max-width: 22ch;
+  min-height: 38px;
 }
 #arrow { width: 100%; max-width: 240px; height: 56px; overflow: visible; }
 #arrow .shaft, #arrow .head {
@@ -825,7 +829,7 @@ body[data-dir="left"] #arrowGroup { transform: scaleX(-1); }
     <!-- ---------------- CENTRE: the operation ---------------- -->
     <section class="panel mid" aria-labelledby="opLabel">
       <div class="opblock">
-        <div class="oplabel" id="opLabel">Squaring</div>
+        <div class="oplabel" id="opLabel">Squaring the side makes the area.</div>
 
         <svg id="arrow" viewBox="0 0 240 56" role="img" aria-hidden="true">
           <g id="arrowGroup">
@@ -900,8 +904,8 @@ const CONFIG = {
     figureName: "square",
     unitName: "unit square",
     unitNamePlural: "unit squares",
-    opForward: "Squaring",
-    opBackward: "Square rooting",
+    opForward: "Squaring the side makes the area.",
+    opBackward: "Square rooting the area makes the side.",
     btnForward: "→ Square it",
     btnBackward: "← Square root"
   },
@@ -912,8 +916,8 @@ const CONFIG = {
     figureName: "cube",
     unitName: "unit cube",
     unitNamePlural: "unit cubes",
-    opForward: "Cubing",
-    opBackward: "Cube rooting",
+    opForward: "Cubing the side makes the volume.",
+    opBackward: "Cube rooting the volume makes the side.",
     btnForward: "→ Cube it",
     btnBackward: "← Cube root"
   }

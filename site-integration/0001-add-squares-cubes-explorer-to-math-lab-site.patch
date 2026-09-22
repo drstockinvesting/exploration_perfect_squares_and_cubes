@@ -49,17 +49,17 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01RuVnZLGRLdHnu4hQWKTdoT
 ---
  apps/squares-cubes/index.html |  823 +++++++++++++++++++++++++++++++++++++++++
- apps/squares-cubes/styles.css |  754 ++++++++++++++++++++++++++++++++++++++
+ apps/squares-cubes/styles.css |  758 ++++++++++++++++++++++++++++++++++++++
  assets/og-squares-cubes.png   | Bin 0 -> 145655 bytes
  balancing-act.html            |   10 
  index.html                    |   22 +
- squares-cubes.html            |  616 +++++++++++++++++++++++++++++++
+ squares-cubes.html            |  620 +++++++++++++++++++++++++++++++
  tiger-trail.html              |    5 
  tools/og-cards.html           |   18 +
  tools/site.config.js          |   58 +++
  tools/vendor-squares-cubes.js |  104 +++++
  transform-lab.html            |    5 
- 11 files changed, 2404 insertions(+), 11 deletions(-)
+ 11 files changed, 2412 insertions(+), 11 deletions(-)
  create mode 100644 apps/squares-cubes/index.html
  create mode 100644 apps/squares-cubes/styles.css
  create mode 100644 assets/og-squares-cubes.png
@@ -68,7 +68,7 @@ Claude-Session: https://claude.ai/code/session_01RuVnZLGRLdHnu4hQWKTdoT
 
 diff --git a/apps/squares-cubes/index.html b/apps/squares-cubes/index.html
 new file mode 100644
-index 0000000..d48f344
+index 0000000..462fa95
 --- /dev/null
 +++ b/apps/squares-cubes/index.html
 @@ -0,0 +1,823 @@
@@ -141,7 +141,7 @@ index 0000000..d48f344
 +    <!-- ---------------- CENTRE: the operation ---------------- -->
 +    <section class="panel mid" aria-labelledby="opLabel">
 +      <div class="opblock">
-+        <div class="oplabel" id="opLabel">Squaring</div>
++        <div class="oplabel" id="opLabel">Squaring the side makes the area.</div>
 +
 +        <svg id="arrow" viewBox="0 0 240 56" role="img" aria-hidden="true">
 +          <g id="arrowGroup">
@@ -216,8 +216,8 @@ index 0000000..d48f344
 +    figureName: "square",
 +    unitName: "unit square",
 +    unitNamePlural: "unit squares",
-+    opForward: "Squaring",
-+    opBackward: "Square rooting",
++    opForward: "Squaring the side makes the area.",
++    opBackward: "Square rooting the area makes the side.",
 +    btnForward: "→ Square it",
 +    btnBackward: "← Square root"
 +  },
@@ -228,8 +228,8 @@ index 0000000..d48f344
 +    figureName: "cube",
 +    unitName: "unit cube",
 +    unitNamePlural: "unit cubes",
-+    opForward: "Cubing",
-+    opBackward: "Cube rooting",
++    opForward: "Cubing the side makes the volume.",
++    opBackward: "Cube rooting the volume makes the side.",
 +    btnForward: "→ Cube it",
 +    btnBackward: "← Cube root"
 +  }
@@ -897,10 +897,10 @@ index 0000000..d48f344
 +</html>
 diff --git a/apps/squares-cubes/styles.css b/apps/squares-cubes/styles.css
 new file mode 100644
-index 0000000..ce3b02a
+index 0000000..7b35077
 --- /dev/null
 +++ b/apps/squares-cubes/styles.css
-@@ -0,0 +1,754 @@
+@@ -0,0 +1,758 @@
 +/* ============================================================================
 +   FONTS  —  the Dr. Cole's Math Lab brand faces
 +   ========================================================================== */
@@ -1312,13 +1312,17 @@ index 0000000..ce3b02a
 +  width: 100%;
 +}
 +.oplabel {
-+  font-size: 13px;
-+  font-weight: 700;
-+  letter-spacing: .06em;
-+  text-transform: uppercase;
++  /* A whole sentence, so it is set as prose: sentence case, ordinary tracking,
++     and a max-width that makes it break after "side" / "area" rather than
++     stretching the centre column. Two lines is the design, not an overflow. */
++  font-size: 14px;
++  font-weight: 600;
++  line-height: 1.35;
 +  color: var(--accent);
 +  text-align: center;
-+  min-height: 18px;
++  text-wrap: balance;
++  max-width: 22ch;
++  min-height: 38px;
 +}
 +#arrow { width: 100%; max-width: 240px; height: 56px; overflow: visible; }
 +#arrow .shaft, #arrow .head {
@@ -4548,10 +4552,10 @@ index f382f8b..33446b7 100644
  </footer>
 diff --git a/squares-cubes.html b/squares-cubes.html
 new file mode 100644
-index 0000000..0e101e5
+index 0000000..4384ce4
 --- /dev/null
 +++ b/squares-cubes.html
-@@ -0,0 +1,616 @@
+@@ -0,0 +1,620 @@
 +<!DOCTYPE html>
 +<html lang="en">
 +<head>
@@ -4963,7 +4967,11 @@ index 0000000..0e101e5
 +          <li><strong>Middle &mdash; the operation.</strong> An arrow pointing <span class="mono">&rarr;</span>
 +            for squaring or cubing, <span class="mono">&larr;</span> for rooting, with the notation
 +            underneath: <span class="mono">5&sup2;</span>, <span class="mono">5&sup3;</span>,
-+            <span class="mono">&radic;25</span>, <span class="mono">&#8731;125</span>.</li>
++            <span class="mono">&radic;25</span>, <span class="mono">&#8731;125</span>. Above the
++            arrow the operation is named as a whole sentence rather than a label &mdash;
++            <em>Squaring the side makes the area</em>, <em>Square rooting the area makes the
++            side</em>, and the cube counterparts of both &mdash; so the direction the arrow points
++            is also said in words, naming what goes in and what comes out.</li>
 +          <li><strong>Right &mdash; the figure and the count.</strong> The
 +            <span class="mono">n&nbsp;&times;&nbsp;n</span> square or
 +            <span class="mono">n&nbsp;&times;&nbsp;n&nbsp;&times;&nbsp;n</span> cube, with the total
