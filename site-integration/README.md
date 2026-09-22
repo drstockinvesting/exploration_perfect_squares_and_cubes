@@ -53,8 +53,26 @@ node tools/apply-site-chrome.js   # must be idempotent — run twice, no diff
 node tools/check-external.js      # must report zero external origins
 ```
 
-If this repo has moved on since the patch was cut, skip the patch and just re-run
-the vendor script — it reproduces `apps/squares-cubes/` from source:
+### Keeping the vendored payload current
+
+`apps/squares-cubes/` inside the patch is a copy of this repo's `index.html`, so
+it goes stale every time that file changes. Both of its hunks are whole-new-file
+additions, which carry no context to invalidate, so they can be regenerated in
+place without touching the rest of the patch — the binary card, the five context
+diffs against blobs this repo does not hold, and the trailer are spliced through
+byte-for-byte, and only the diffstat is recomputed.
+
+The recipe is the vendor script's lift, followed by the one edit
+`apply-site-chrome.js` makes: it stamps its own header comment over the upstream
+one inside the `FONTS` block, leaving the base64 payload identical. Regenerating
+is worth a check that the same recipe still reproduces the hunks already in the
+patch from the previous `index.html` — if it stops doing so, the site's
+generator has changed and the patch needs re-cutting against the site repo
+rather than editing.
+
+If this repo has moved on further than that — anything outside
+`apps/squares-cubes/` — skip the patch and just re-run the vendor script, which
+reproduces the same directory from source:
 
 ```bash
 node tools/vendor-squares-cubes.js /path/to/exploration_perfect_squares_and_cubes
