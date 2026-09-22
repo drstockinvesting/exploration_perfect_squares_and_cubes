@@ -60,29 +60,37 @@
   --line:          #141328;
   --line-strong:   #26243f;
 
-  /* Mode accents: brand --tc and --or. --*-fill tints the flat figures — the
-     unit row, the n x n square, the exploded layer plates — where one pass of
-     alpha over --bg is all that ever composites. */
-  --sq:            #00d4ff;   /* squares accent */
-  --sq-fill:       rgba(0, 212, 255, .30);
-  --sq-fill-2:     rgba(0, 212, 255, .15);
-  --cu:            #ff9500;   /* cubes accent  */
-  --cu-fill:       rgba(255, 149, 0, .30);
-  --cu-fill-2:     rgba(255, 149, 0, .15);
+  /* Two colours carry the whole app, and the split is the lesson: yellow is
+     always a side length, blue is always the figure it builds. Both shapes use
+     the same pair — a cube is not a different topic from a square, it is the
+     same move in one more dimension. --*-fill tints the flat figures (the unit
+     row, the n x n square, the exploded layer plates), where one pass of alpha
+     over --bg is all that ever composites. */
+  --blue:          #00d4ff;   /* brand --tc */
+  --blue-fill:     rgba(0, 212, 255, .30);
+  --hl:            #ffd60a;   /* side length, everywhere it appears */
+  /* Yellow needs far more alpha than cyan to survive the composite over --bg:
+     below about .8 it lands on olive rather than on yellow. The unit divisions
+     inside a highlighted run come from the grid gap, not from the border, so
+     the near-opaque fill costs nothing. */
+  --hl-fill:       rgba(255, 214, 10, .88);
 
   /* The assembled cube is the one place a tint will not do, and it needs its
-     own token. Its shell is up to 488 unit cubes of six faces each, so alpha
+     own tokens. Its shell is up to 488 unit cubes of six faces each, so alpha
      compounds through the stack until the figure is a solid block with no unit
      edges showing. These are the same two hues composited over --bg once and
      then frozen opaque, so the cube stays a lattice at every n. */
-  --sq-face:       #0a4a5e;
-  --cu-face:       #5c380a;
+  --blue-face:     #0a4a5e;
+  --hl-face:       #cfa900;
 
-  --accent:        var(--sq);
-  --fill:          var(--sq-fill);
-  --fill-2:        var(--sq-fill-2);
-  --face:          var(--sq-face);
-  --glow:          #ffcc00;   /* gnomon / new-units highlight — brand --oc */
+  --accent:        var(--blue);
+  --fill:          var(--blue-fill);
+  --face:          var(--blue-face);
+  /* The gnomon flash has to be a third colour now: yellow is the standing mark
+     for "side length", and the L that appears when the square grows is a
+     different claim (it is the 2n + 1 between n² and (n+1)²), so it flashes
+     white and settles into whichever of the two colours the units belong to. */
+  --glow:          #ffffff;
   --on-accent:     #04202b;   /* ink on a saturated accent, as the site uses */
 
   --shadow:        0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45);
@@ -95,12 +103,13 @@
   --mono:  'Space Mono', 'SF Mono', Consolas, monospace;
 }
 
-/* Cubes mode repoints the accent tokens; every figure reads from these. */
-body[data-mode="cubes"] {
-  --accent: var(--cu);
-  --fill:   var(--cu-fill);
-  --fill-2: var(--cu-fill-2);
-  --face:   var(--cu-face);
+/* The side-length panel repoints the accent tokens to yellow, so everything
+   inside it — the readout, the slider, the unit row, the focus ring — is the
+   same colour as the highlighted edges of the figure it builds. */
+.panel.side {
+  --accent: var(--hl);
+  --fill:   var(--hl-fill);
+  --face:   var(--hl-face);
 }
 
 /* ============================================================================
@@ -161,14 +170,14 @@ header.bar {
 /* Wordmark, split the way the site splits it: a white "Dr. Cole's" against the
    cyan "Math Lab". It sits on its own line above the app name at every width,
    so the app never reads as being called "Dr. Cole's Math Lab Squares...".
-   Pinned to --sq rather than --accent: the mode accent is a reading cue for the
-   figures, and the brand mark should not change colour when the shape does. */
+   Pinned to --blue rather than --accent: the accent is a reading cue inside the
+   figures, and the brand mark should take no part in it. */
 .title .wordmark {
   flex-basis: 100%;
   font-size: 12px;
   font-weight: 900;
   letter-spacing: .02em;
-  color: var(--sq);
+  color: var(--blue);
 }
 .title .wordmark b { color: var(--ink); font-weight: 900; }
 .title .level {
@@ -411,13 +420,17 @@ input[type=range]::-moz-range-thumb {
   width: 100%;
 }
 .oplabel {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  /* A whole sentence, so it is set as prose: sentence case, ordinary tracking,
+     and a max-width that makes it break after "side" / "area" rather than
+     stretching the centre column. Two lines is the design, not an overflow. */
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
   color: var(--accent);
   text-align: center;
-  min-height: 18px;
+  text-wrap: balance;
+  max-width: 22ch;
+  min-height: 38px;
 }
 #arrow { width: 100%; max-width: 240px; height: 56px; overflow: visible; }
 #arrow .shaft, #arrow .head {
@@ -506,6 +519,11 @@ body[data-dir="left"] #arrowGroup { transform: scaleX(-1); }
   min-height: 20px;
 }
 .eqline b { color: var(--ink); font-family: var(--mono); font-weight: 700; }
+/* A numeral that is a side length is yellow and a numeral that is a total is
+   blue, wherever it is written — the same code the figures are drawn in. The
+   b.* selectors are only there to outrank the rule just above. */
+.sideN,  .eqline b.sideN  { color: var(--hl); }
+.totalN, .eqline b.totalN { color: var(--blue); }
 
 /* ---- right: figure + counter ---------------------------------------------- */
 .figwrap {
@@ -516,9 +534,23 @@ body[data-dir="left"] #arrowGroup { transform: scaleX(-1); }
   padding: 8px 0 4px;
   position: relative;
 }
+/* The square and the two braces that measure it. The wrapper's padding is the
+   room the braces live in, so the whole assembly is one centred box that can
+   never overflow the panel. */
+#squareWrap {
+  position: relative;
+  padding-left: var(--bracePad);
+  padding-bottom: var(--bracePad);
+}
 #squareFig {
   display: grid;
   gap: 2px;
+}
+/* The units along the bottom and left edges are the side length, laid against
+   the figure they generate — same yellow as the row in the left panel. */
+#squareFig .usq.edge {
+  background: var(--hl-fill);
+  border-color: var(--hl);
 }
 #squareFig .usq { animation: none; }
 #squareFig .usq.isnew { animation: pop .45s cubic-bezier(.34,1.56,.64,1) backwards; }
@@ -564,6 +596,12 @@ body[data-dir="left"] #arrowGroup { transform: scaleX(-1); }
   border: 1px solid var(--accent);
   left: 0; top: 0;
 }
+/* The three edges meeting at the front-bottom-left corner: one run of s units
+   per dimension, so the cube carries its own side length on it. */
+.ucube.edge > i {
+  background: var(--hl-face);
+  border-color: var(--hl);
+}
 /* Per-orientation tint so edges read without lighting maths. */
 .ucube > i.f  { filter: brightness(1.06); }
 .ucube > i.bk { filter: brightness(.80); }
@@ -596,6 +634,58 @@ body[data-dir="left"] #arrowGroup { transform: scaleX(-1); }
   padding: 1px 6px;
   white-space: nowrap;
   transform: translateZ(1px);
+}
+
+/* ---- braces  —  "Side length = s" along the highlighted edges -------------- */
+.brace { position: absolute; display: flex; align-items: center; gap: 4px; }
+.brace svg { display: block; overflow: visible; }
+.brace path {
+  fill: none;
+  stroke: var(--hl);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.braceLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hl);
+  white-space: nowrap;
+}
+.braceLabel b { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+#sqBraceH { left: var(--bracePad); bottom: 0; flex-direction: column; }
+#sqBraceV {
+  left: 0; top: 0;
+  width: var(--bracePad);
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+/* Vertical writing rather than a rotate(): the box keeps the height flex is
+   centring against, so the label stays on the brace's midpoint at every n. */
+#sqBraceV .braceLabel { writing-mode: vertical-rl; transform: rotate(180deg); }
+
+/* The cube's brace is a real object in the 3D scene, fixed to the front-bottom
+   edge, so it turns with the cube and always measures that edge rather than the
+   width the projection happens to have. Only its label is pulled back upright:
+   the stage's own rotation and fit-scale are undone in reverse order, which
+   leaves the text facing the viewer at a constant size. */
+#cubeBrace {
+  position: absolute;
+  left: 0; top: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+#cubeBrace svg { position: absolute; left: 0; top: 0; }
+#cubeBrace .braceLabel {
+  position: absolute;
+  left: 50%;
+  transform-origin: 0 0;
+  transform:
+    scale(calc(1 / var(--fit, 1)))
+    rotateY(calc(-1 * var(--ry, 0deg)))
+    rotateX(calc(-1 * var(--rx, 0deg)))
+    translate(-50%, 0);
 }
 
 /* ---- counter --------------------------------------------------------------- */
@@ -714,7 +804,7 @@ body[data-dir="left"] #arrowGroup { transform: scaleX(-1); }
   <main class="stage">
 
     <!-- ---------------- LEFT: side length ---------------- -->
-    <section class="panel" aria-labelledby="leftH">
+    <section class="panel side" aria-labelledby="leftH">
       <div class="roleline">
         <span class="role" id="leftRole">Input</span>
       </div>
@@ -739,7 +829,7 @@ body[data-dir="left"] #arrowGroup { transform: scaleX(-1); }
     <!-- ---------------- CENTRE: the operation ---------------- -->
     <section class="panel mid" aria-labelledby="opLabel">
       <div class="opblock">
-        <div class="oplabel" id="opLabel">Squaring</div>
+        <div class="oplabel" id="opLabel">Squaring the side makes the area.</div>
 
         <svg id="arrow" viewBox="0 0 240 56" role="img" aria-hidden="true">
           <g id="arrowGroup">
@@ -763,11 +853,22 @@ body[data-dir="left"] #arrowGroup { transform: scaleX(-1); }
       <h2 id="rightH">The square</h2>
 
       <div class="figwrap" id="figWrap">
-        <div id="squareFig" aria-hidden="true"></div>
+        <div id="squareWrap" aria-hidden="true">
+          <div id="squareFig"></div>
+          <div class="brace" id="sqBraceH">
+            <svg><path/></svg><span class="braceLabel"></span>
+          </div>
+          <div class="brace" id="sqBraceV">
+            <svg><path/></svg><span class="braceLabel"></span>
+          </div>
+        </div>
         <div id="cubeFig" hidden aria-hidden="true">
           <div id="cubeStage">
             <div class="cubeBuild" id="cubeSolid"></div>
             <div class="cubeBuild" id="cubeLayers" hidden></div>
+            <div class="brace" id="cubeBrace">
+              <svg><path/></svg><span class="braceLabel"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -803,8 +904,8 @@ const CONFIG = {
     figureName: "square",
     unitName: "unit square",
     unitNamePlural: "unit squares",
-    opForward: "Squaring",
-    opBackward: "Square rooting",
+    opForward: "Squaring the side makes the area.",
+    opBackward: "Square rooting the area makes the side.",
     btnForward: "→ Square it",
     btnBackward: "← Square root"
   },
@@ -815,8 +916,8 @@ const CONFIG = {
     figureName: "cube",
     unitName: "unit cube",
     unitNamePlural: "unit cubes",
-    opForward: "Cubing",
-    opBackward: "Cube rooting",
+    opForward: "Cubing the side makes the volume.",
+    opBackward: "Cube rooting the volume makes the side.",
     btnForward: "→ Cube it",
     btnBackward: "← Cube root"
   }
@@ -830,6 +931,50 @@ const RADICAL_SVG =
 
 /* The seed viewing angle for the cube: a clear three-quarter isometric read. */
 const SEED_RX = -24, SEED_RY = -32;
+
+/* Brace geometry. BRACE_PAD is the strip the square's two braces live in — it
+   is taken out of the figure's budget before the unit size is chosen, so the
+   braces never push the square out of its panel. */
+const BRACE_PAD = 46;
+const BRACE_R = 8;
+
+/** A curly bracket spanning L px: two end curls, a centre tip, arms between.
+ *  `r` is the curl radius, so the brace is 2r deep and needs L > 4r — hence
+ *  the caller's clamp. Vertical braces are the same path with x and y swapped,
+ *  tip pointing left. */
+function bracePath(L, r, vertical) {
+  return vertical
+    ? "M" + (2 * r) + " 0" +
+      " q" + (-r) + " 0 " + (-r) + " " + r +
+      " V" + (L / 2 - r) +
+      " q0 " + r + " " + (-r) + " " + r +
+      " q" + r + " 0 " + r + " " + r +
+      " V" + (L - r) +
+      " q0 " + r + " " + r + " " + r
+    : "M0 0" +
+      " q0 " + r + " " + r + " " + r +
+      " H" + (L / 2 - r) +
+      " q" + r + " 0 " + r + " " + r +
+      " q0 " + (-r) + " " + r + " " + (-r) +
+      " H" + (L - r) +
+      " q" + r + " 0 " + r + " " + (-r);
+}
+
+/** Size one brace: its <svg> box, its path, and its label. */
+function setBrace(node, L, r, vertical, n) {
+  const w = vertical ? 2 * r : L;
+  const h = vertical ? L : 2 * r;
+  const svg = node.querySelector("svg");
+  svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+  svg.setAttribute("width", w);
+  svg.setAttribute("height", h);
+  svg.querySelector("path").setAttribute("d", bracePath(L, r, vertical));
+  node.querySelector(".braceLabel").innerHTML = "Side length = <b>" + n + "</b>";
+}
+
+/** The curl radius a brace of length L can carry without its own curves
+ *  meeting in the middle. */
+const braceRadius = (L) => Math.max(3, Math.min(BRACE_R, L / 5));
 
 /* ============================================================================
  * 2. STATE — one plain object plus a diffing setState, so a rotation drag
@@ -855,8 +1000,10 @@ const el = {
   leftH: $("leftH"), rightH: $("rightH"), leftRole: $("leftRole"), rightRole: $("rightRole"),
   opLabel: $("opLabel"), notation: $("notation"), eqLine: $("eqLine"),
   figwrap: $("figWrap"),
-  squareFig: $("squareFig"), cubeFig: $("cubeFig"), cubeStage: $("cubeStage"),
-  cubeSolid: $("cubeSolid"), cubeLayers: $("cubeLayers"),
+  squareWrap: $("squareWrap"), squareFig: $("squareFig"),
+  sqBraceH: $("sqBraceH"), sqBraceV: $("sqBraceV"),
+  cubeFig: $("cubeFig"), cubeStage: $("cubeStage"),
+  cubeSolid: $("cubeSolid"), cubeLayers: $("cubeLayers"), cubeBrace: $("cubeBrace"),
   totalValue: $("totalValue"), totalEq: $("totalEq"), totalSub: $("totalSub"),
   liveSummary: $("liveSummary"),
   modeSquares: $("modeSquares"), modeCubes: $("modeCubes"),
@@ -932,7 +1079,7 @@ function rowBudget() {
 function figUnitSize(n, mode) {
   return mode === "cubes"
     ? clamp(Math.floor(figBudget() / (n * 1.55)), 10, 60)
-    : clamp(Math.floor((figBudget() - (n - 1) * 2) / n), 6, 72);
+    : clamp(Math.floor((figBudget() - BRACE_PAD - (n - 1) * 2) / n), 6, 72);
 }
 /** Unit size for the linear row on the left. Capped at the figure's own unit
  *  size, so a row unit never looks bigger than the units it builds. */
@@ -970,7 +1117,8 @@ function buildSquare(n, previous) {
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
       const d = document.createElement("div");
-      d.className = "usq";
+      // Bottom row and left column: the two sides the braces measure.
+      d.className = (r === n - 1 || c === 0) ? "usq edge" : "usq";
       d.style.setProperty("--u", u + "px");
       if (showGnomon && (r >= previous || c >= previous)) {
         d.classList.add("isnew");
@@ -1032,7 +1180,16 @@ function buildCubeShell(n) {
         const onShell =
           x === 0 || x === n - 1 || y === 0 || y === n - 1 || z === 0 || z === n - 1;
         if (!onShell) continue;
-        frag.appendChild(makeUnitCube(u, { x: x + off, y: y + off, z: z + off }));
+        const cube = makeUnitCube(u, { x: x + off, y: y + off, z: z + off });
+        // The three edges meeting at the front-bottom-left corner (y grows
+        // downward in CSS 3D, so the bottom layer is y = n - 1): one run of
+        // n units per dimension.
+        const onEdge =
+          (y === n - 1 && z === n - 1) ||
+          (x === 0 && z === n - 1) ||
+          (x === 0 && y === n - 1);
+        if (onEdge) cube.classList.add("edge");
+        frag.appendChild(cube);
         built++;
       }
     }
@@ -1095,7 +1252,7 @@ function renderChrome() {
   el.sideWord.textContent = "units along one side";
   el.totalSub.textContent = c.unitNamePlural + " in all";
   el.cubeTools.hidden = state.mode !== "cubes";
-  el.squareFig.hidden = state.mode !== "squares";
+  el.squareWrap.hidden = state.mode !== "squares";
   el.cubeFig.hidden = state.mode !== "cubes";
 }
 
@@ -1124,13 +1281,43 @@ function renderFigure(previousN) {
     const { frag, u } = buildSquare(state.n, previousN);
     el.squareFig.style.gridTemplateColumns = "repeat(" + state.n + ", " + u + "px)";
     el.squareFig.replaceChildren(frag);
+    renderSquareBraces(state.n, u);
   } else {
     const shell = buildCubeShell(state.n);
     el.cubeSolid.replaceChildren(shell.frag);
     const layers = buildCubeLayers(state.n);
     el.cubeLayers.replaceChildren(layers.frag);
+    renderCubeBrace(state.n, shell.u);
     positionLayers();
   }
+}
+
+/** The two braces on the square, sized to the figure they sit against. */
+function renderSquareBraces(n, u) {
+  const size = n * u + (n - 1) * 2;      // units plus the grid gaps
+  const r = braceRadius(size);
+  el.squareWrap.style.setProperty("--bracePad", BRACE_PAD + "px");
+  el.sqBraceH.style.width = size + "px";
+  el.sqBraceV.style.height = size + "px";
+  setBrace(el.sqBraceH, size, r, false, n);
+  setBrace(el.sqBraceV, size, r, true, n);
+}
+
+/** The cube's brace, fixed to the front-bottom edge of the solid. The solid
+ *  spans -n*u/2 .. +n*u/2 on every axis, so that edge starts at the near
+ *  bottom-left corner and runs the width of the figure. */
+function renderCubeBrace(n, u) {
+  const size = n * u;
+  const r = braceRadius(size);
+  setBrace(el.cubeBrace, size, r, false, n);
+  // An explicit box, so the label's left:50% lands on the middle of the edge.
+  el.cubeBrace.style.width = size + "px";
+  el.cubeBrace.style.height = (2 * r) + "px";
+  el.cubeBrace.style.transform =
+    "translate3d(" + (-size / 2) + "px," + (size / 2) + "px," + (size / 2) + "px)";
+  // The brace lies in a tilted plane, so the label needs more clearance here
+  // than the flat square's does to stay off the stroke at a raked angle.
+  el.cubeBrace.querySelector(".braceLabel").style.top = (2 * r + 18) + "px";
 }
 
 /** Gap between exploded layers: generous at small n, capped at large n so the
@@ -1169,9 +1356,10 @@ function updateFit() {
     const spread = explodeSpread(n, u);
     const plate = n * u + (n - 1) + 2;
     // Layer tags hang off the right of each plate and scale with them.
-    fit = fitScale(plate, (n - 1) * spread, 100);
+    fit = fitScale(plate, (n - 1) * spread, 100, 0);
   } else {
-    fit = fitScale(n * u, n * u, 0);
+    // The brace and its label hang below the solid and have to fit too.
+    fit = fitScale(n * u, n * u, 0, 2 * braceRadius(n * u) + 30);
   }
   el.cubeStage.style.setProperty("--fit", String(fit));
 }
@@ -1180,7 +1368,7 @@ function updateFit() {
  *  A plate of side P centred on the origin, stacked across a depth D, then
  *  rotated by (rx, ry), projects to a box of these half-extents — times the
  *  perspective magnification of the nearest plate. */
-function fitScale(P, D, tagW) {
+function fitScale(P, D, tagW, padH) {
   const rad = (d) => d * Math.PI / 180;
   const cx = Math.abs(Math.cos(rad(state.rx))), sx = Math.abs(Math.sin(rad(state.rx)));
   const cy = Math.abs(Math.cos(rad(state.ry))), sy = Math.abs(Math.sin(rad(state.ry)));
@@ -1190,7 +1378,7 @@ function fitScale(P, D, tagW) {
   const mag = PERSPECTIVE / Math.max(PERSPECTIVE - D / 2, 200);
   // Tags hang off one side only, so their allowance is added once.
   const w = (2 * halfW + (tagW || 0) * cy) * mag;
-  const h = 2 * halfH * mag;
+  const h = 2 * halfH * mag + (padH || 0);
   const box = figBox();
   return clamp(Math.min(box.w / w, box.h / h) * 0.97, 0.25, 1);
 }
@@ -1201,6 +1389,8 @@ function renderExplode() {
   el.explodeBtn.textContent = on ? "Rebuild cube" : "Explode layers";
   el.cubeSolid.hidden = on;
   el.cubeLayers.hidden = !on;
+  // Nothing to brace once the cube is fanned apart.
+  el.cubeBrace.hidden = on;
   positionLayers();
 }
 
@@ -1213,18 +1403,20 @@ function renderNotation() {
   el.opLabel.textContent = forward ? c.opForward : c.opBackward;
 
   if (forward) {
-    el.notation.innerHTML = state.n + "<sup>" + c.exponent + "</sup>";
+    el.notation.innerHTML =
+      '<span class="sideN">' + state.n + "</span><sup>" + c.exponent + "</sup>";
     el.eqLine.innerHTML =
-      "<b>" + state.n + "</b><sup>" + c.exponent + "</sup> = <b>" + total() + "</b>";
+      '<b class="sideN">' + state.n + "</b><sup>" + c.exponent +
+      '</sup> = <b class="totalN">' + total() + "</b>";
   } else {
     const idx = c.radicalIndex
       ? '<span class="idx">' + c.radicalIndex + "</span>" : "";
     el.notation.innerHTML =
       '<span class="radical">' + idx + RADICAL_SVG +
-      '<span class="rad">' + total() + "</span></span>";
+      '<span class="rad totalN">' + total() + "</span></span>";
     el.eqLine.innerHTML =
       (c.radicalIndex ? "cube root" : "square root") +
-      " of <b>" + total() + "</b> = <b>" + state.n + "</b>";
+      ' of <b class="totalN">' + total() + '</b> = <b class="sideN">' + state.n + "</b>";
   }
 }
 
@@ -1232,8 +1424,9 @@ function renderCounter(animate) {
   const c = cfg();
   const N = total();
   el.totalValue.textContent = String(N);
-  el.totalEq.textContent = state.n + " × " + state.n +
-    (c.dim === 3 ? " × " + state.n : "") + " = " + N;
+  const s = '<span class="sideN">' + state.n + "</span>";
+  el.totalEq.innerHTML = s + " × " + s + (c.dim === 3 ? " × " + s : "") +
+    ' = <span class="totalN">' + N + "</span>";
   el.totalSub.textContent = c.dim === 3
     ? state.n + " layers × " + (state.n * state.n) + " = " + N + " " + c.unitNamePlural
     : c.unitNamePlural + " in all";
