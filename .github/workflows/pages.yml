@@ -1,0 +1,54 @@
+# Publishes the explorer at
+# https://drstockinvesting.github.io/exploration_perfect_squares_and_cubes/
+#
+# The site tracks `main`: every push there redeploys. Nothing here runs on a
+# feature branch, because the `github-pages` environment GitHub creates on the
+# first deploy only allows the default branch.
+name: Deploy the explorer to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time. A run queued behind another is superseded rather than
+# cancelled mid-flight, so a push during a deploy still ends up published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The app is one self-contained file. Publishing the repo root would also
+      # serve README.md and the site-integration patch, so the site is assembled
+      # from index.html alone.
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp index.html _site/index.html
+
+      # enablement: true switches Pages on through the API using this workflow's
+      # token, so the first run does not depend on anyone visiting Settings. It
+      # is a no-op once Pages is on.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

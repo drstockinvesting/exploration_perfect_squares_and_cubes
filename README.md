@@ -1,18 +1,24 @@
 # Squares & Cubes Explorer
 
 A single-file classroom app that ties **n²/√n** and **n³/∛n** to the shapes they
-describe: a side length on the left, the assembled figure on the right, and an
-arrow in the middle naming the operation that joins them.
+describe: a side length on the left, the assembled figure on the right, and in
+the middle an arrow, and a sentence saying what the operation takes in and what
+it gives back.
 
 Open `index.html` in any modern desktop browser. No server, no build step, no
 dependencies — copy the file onto a shared drive or email it and it just runs.
+
+It is also published from `main` at
+<https://drstockinvesting.github.io/exploration_perfect_squares_and_cubes/>, by
+`.github/workflows/pages.yml`. That workflow serves `index.html` alone, not the
+repo root, so the README and the `site-integration/` patch stay off the site.
 
 ## Level 1 · Explore (built)
 
 | Part of the screen | What it does |
 | --- | --- |
 | **Left** | A slider sets the side length (squares 1–20, cubes 1–10) and lays that many yellow units in a line. |
-| **Middle** | An arrow pointing **→** for squaring/cubing or **←** for rooting, with the notation underneath: `5²`, `5³`, `√25`, `∛125`. |
+| **Middle** | A sentence naming the operation — *Squaring the side makes the area.*, *Square rooting the area makes the side.*, and the cube counterparts — over an arrow pointing **→** for squaring/cubing or **←** for rooting, with the notation underneath: `5²`, `5³`, `√25`, `∛125`. |
 | **Right** | The n×n square or n×n×n cube, with a counter for the total: `5 × 5 × 5 = 125`, and for cubes `5 layers × 25 = 125`. |
 
 Details worth pointing out to students:
