@@ -13,7 +13,7 @@ It is also published from `main` at
 `.github/workflows/pages.yml`. That workflow serves `index.html` alone, not the
 repo root, so the README stays off the site.
 
-It is also app 05 on [Dr. Cole's Math Lab](https://drcolesmathlab.dr-stock-investing.workers.dev/squares-cubes.html).
+It is also app 05 on [Dr. Cole's Math Lab](https://drcolesmathlab.github.io/squares-cubes.html).
 The site keeps its own copy under `apps/squares-cubes/`, which does not follow
 this repo on its own — after changing `index.html`, re-vendor it from a checkout
 of the site repo:
