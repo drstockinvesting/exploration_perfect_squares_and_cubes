@@ -32,8 +32,7 @@ jobs:
       - uses: actions/checkout@v4
 
       # The app is one self-contained file. Publishing the repo root would also
-      # serve README.md and the site-integration patch, so the site is assembled
-      # from index.html alone.
+      # serve README.md, so the site is assembled from index.html alone.
       - name: Assemble the site
         run: |
           mkdir -p _site

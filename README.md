@@ -11,7 +11,20 @@ dependencies — copy the file onto a shared drive or email it and it just runs.
 It is also published from `main` at
 <https://drstockinvesting.github.io/exploration_perfect_squares_and_cubes/>, by
 `.github/workflows/pages.yml`. That workflow serves `index.html` alone, not the
-repo root, so the README and the `site-integration/` patch stay off the site.
+repo root, so the README stays off the site.
+
+It is also app 05 on [Dr. Cole's Math Lab](https://drcolesmathlab.dr-stock-investing.workers.dev/squares-cubes.html).
+The site keeps its own copy under `apps/squares-cubes/`, which does not follow
+this repo on its own — after changing `index.html`, re-vendor it from a checkout
+of the site repo:
+
+```bash
+node tools/vendor-squares-cubes.js /path/to/exploration_perfect_squares_and_cubes
+node tools/apply-site-chrome.js && node tools/check-external.js
+```
+
+If the change alters what the app does, update the prose in the site's
+`squares-cubes.html` too.
 
 ## Level 1 · Explore (built)
 
